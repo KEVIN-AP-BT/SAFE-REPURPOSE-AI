@@ -1,109 +1,118 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+from datetime import datetime
 
 st.set_page_config(page_title="SafeRepurpose AI", page_icon="🧬", layout="wide")
 
-# Styling
-st.markdown("""
-<style>
-.stApp {background: linear-gradient(135deg,#081421 0%,#0e1b2c 55%,#102737 100%); color:#e9f2f8;}
-[data-testid="stSidebar"] {background:#101e2e;}
-div[data-testid="stMetric"] {background:#132a3a;border:1px solid #23475a;padding:14px;border-radius:14px;}
-div.stButton>button {border-radius:12px; font-weight:600;}
-.small-muted {color:#a7bdcc;}
-</style>
-""", unsafe_allow_html=True)
-
 st.title("🧬 SafeRepurpose AI")
-st.caption("AI-driven research candidate prioritization • Biosafety-aware review")
-st.warning("Prototype only — synthetic demonstration data. This is not medical advice, efficacy evidence, or a formal biosafety certification.")
+st.caption("AI-inspired research candidate comparison • Biosafety-aware review")
 
-with st.sidebar:
-    st.header("Navigation")
-    page=st.radio("Go to", ["Overview","Research Analysis","Biosafety Review","Report"])
-    st.divider()
-    st.caption("Demo uses simulated data, not validated drug-response signatures.")
+st.warning(
+    "Prototype only — all scores and comparison patterns below are synthetic demonstration values. "
+    "This app does not analyze real biological datasets, establish efficacy, recommend treatment, "
+    "or provide formal biosafety certification."
+)
 
-# Synthetic data explicitly labeled
-demo = pd.DataFrame([
-    {"Candidate":"Candidate Alpha","Pattern similarity":0.82,"Evidence completeness":0.90,"Uncertainty":0.22,"Review flags":1},
-    {"Candidate":"Candidate Beta","Pattern similarity":0.73,"Evidence completeness":0.75,"Uncertainty":0.35,"Review flags":2},
-    {"Candidate":"Candidate Gamma","Pattern similarity":0.65,"Evidence completeness":0.88,"Uncertainty":0.28,"Review flags":1},
-    {"Candidate":"Candidate Delta","Pattern similarity":0.59,"Evidence completeness":0.62,"Uncertainty":0.48,"Review flags":3},
-])
-# Demo scoring is illustrative and not biological prediction
-demo["Illustrative priority score"] = (demo["Pattern similarity"]*0.55 + demo["Evidence completeness"]*0.30 + (1-demo["Uncertainty"])*0.15)*100
-demo=demo.sort_values("Illustrative priority score",ascending=False).reset_index(drop=True)
+st.header("1. Choose a disease context")
+disease = st.selectbox(
+    "Disease context",
+    ["Alzheimer's disease", "Asthma", "Type 2 diabetes", "Rheumatoid arthritis", "Parkinson's disease"]
+)
 
-if page=="Overview":
-    st.header("Project overview")
-    st.write("A transparent research-support prototype: compare a disease-associated pattern to a hypothetical perturbation pattern, show an illustrative shortlist, and surface review questions.")
-    a,b,c=st.columns(3)
-    a.metric("Modules","4")
-    b.metric("Demo candidates","4")
-    c.metric("Mode","Synthetic")
-    st.markdown("### Workflow")
-    st.markdown("**Disease context → Data review → Candidate shortlist → Biosafety-aware checks → Report**")
-    st.info("Ranking in this version is based on invented demonstration values. No actual disease dataset or drug is analyzed.")
-    st.markdown("### What this prototype demonstrates")
-    st.markdown("- Responsive interface designed for phone and laptop\n- Candidate-ranking visualization with transparent example score\n- Evidence and uncertainty fields\n- Biosafety-awareness checklist\n- Exportable demo report")
+# Synthetic, illustrative candidate list and scores; not derived from real biological data.
+demo = {
+    "Alzheimer's disease": [
+        ("Metformin", 78, "Illustrative demo score only"),
+        ("Dexamethasone", 67, "Illustrative demo score only"),
+        ("Atorvastatin", 61, "Illustrative demo score only"),
+        ("Losartan", 54, "Illustrative demo score only"),
+    ],
+    "Asthma": [
+        ("Metformin", 74, "Illustrative demo score only"),
+        ("Atorvastatin", 69, "Illustrative demo score only"),
+        ("Losartan", 58, "Illustrative demo score only"),
+        ("Dexamethasone", 52, "Illustrative demo score only"),
+    ],
+    "Type 2 diabetes": [
+        ("Losartan", 80, "Illustrative demo score only"),
+        ("Atorvastatin", 72, "Illustrative demo score only"),
+        ("Dexamethasone", 64, "Illustrative demo score only"),
+        ("Metformin", 56, "Illustrative demo score only"),
+    ],
+    "Rheumatoid arthritis": [
+        ("Dexamethasone", 82, "Illustrative demo score only"),
+        ("Metformin", 70, "Illustrative demo score only"),
+        ("Losartan", 62, "Illustrative demo score only"),
+        ("Atorvastatin", 57, "Illustrative demo score only"),
+    ],
+    "Parkinson's disease": [
+        ("Atorvastatin", 76, "Illustrative demo score only"),
+        ("Metformin", 71, "Illustrative demo score only"),
+        ("Losartan", 63, "Illustrative demo score only"),
+        ("Dexamethasone", 55, "Illustrative demo score only"),
+    ],
+}
 
-elif page=="Research Analysis":
-    st.header("Research analysis")
-    disease=st.selectbox("Choose a research context",["Alzheimer's disease","Parkinson's disease","Type 2 diabetes","Cancer (general)","Other"])
-    st.text_input("Optional study ID / dataset accession",placeholder="e.g., GSEXXXXX (not fetched automatically)")
-    st.markdown("#### Candidate shortlist (synthetic example)")
-    st.caption("These generic labels are not actual drugs and are not tied to the selected disease.")
-    st.dataframe(demo[["Candidate","Pattern similarity","Evidence completeness","Uncertainty","Illustrative priority score"]].style.format({"Pattern similarity":"{:.2f}","Evidence completeness":"{:.2f}","Uncertainty":"{:.2f}","Illustrative priority score":"{:.1f}"}),use_container_width=True,hide_index=True)
-    st.bar_chart(demo.set_index("Candidate")["Illustrative priority score"])
-    st.markdown("#### How the illustrative score works")
-    st.code("score = 55% pattern similarity + 30% evidence completeness + 15% (1 − uncertainty)",language="text")
-    st.write("This weighting is an invented demo rule. It is not validated and should not be interpreted as a biological or clinical score.")
-    st.download_button("Download demo shortlist CSV",demo.to_csv(index=False).encode("utf-8"),"saferepurpose_demo_shortlist.csv","text/csv")
+st.header("2. Illustrative medicine-candidate shortlist")
+rows = demo[disease]
+df = pd.DataFrame(rows, columns=["Medicine name (example)", "Demo score", "Evidence label"])
+df = df.sort_values("Demo score", ascending=False).reset_index(drop=True)
+df.insert(0, "Demo rank", range(1, len(df) + 1))
+st.caption("These medicines are example names for a UI demonstration. The ranking is invented and must not be interpreted as a real research finding.")
+st.dataframe(df, use_container_width=True, hide_index=True)
+st.bar_chart(df.set_index("Medicine name (example)")["Demo score"])
 
-elif page=="Biosafety Review":
-    st.header("Biosafety-aware review")
-    st.write("Checklist for responsible interpretation. It does not perform a formal biosafety assessment.")
-    checks=[
-        "Data source and accession documented",
-        "Dataset organism, tissue/cell type and context recorded",
-        "Missing values and data quality limitations described",
-        "Prediction method and score weights disclosed",
-        "Uncertainty and out-of-domain limitations disclosed",
-        "No experimental or clinical claims made from ranking alone",
-        "Institutional review / biosafety consultation considered where applicable",
-        "Privacy, access and responsible-use requirements considered",
-    ]
-    answers={}
-    for item in checks:
-        answers[item]=st.checkbox(item)
-    completed=sum(answers.values())
-    st.metric("Checklist completed",f"{completed} / {len(checks)}")
-    if completed==len(checks):
-        st.success("All checklist items marked. This is self-attestation only, not a safety approval.")
-    else:
-        st.info("Review remaining items before presenting the interpretation.")
-    st.caption("Checklist status is user-marked and does not certify biosafety, efficacy, or regulatory compliance.")
+st.header("3. Review the demo candidate")
+chosen = st.selectbox("Select an example medicine to inspect", df["Medicine name (example)"].tolist())
+selected_row = df[df["Medicine name (example)"] == chosen].iloc[0]
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Illustrative score", int(selected_row["Demo score"]), help="Invented demonstration value; not evidence.")
+with col2:
+    st.metric("Displayed demo rank", int(selected_row["Demo rank"]), help="Rank within this synthetic example only.")
 
-elif page=="Report":
-    st.header("Demo report")
-    st.markdown("### SafeRepurpose AI — Prototype Summary")
-    st.write("**Mode:** Synthetic demonstration")
-    st.write("**Scope:** Research prioritization interface and biosafety-aware checklist")
-    st.write("**Candidates:** Generic labels Alpha, Beta, Gamma, Delta")
-    st.write("**Interpretation:** Scores are illustrative software behavior only; they are not computed from real biological data.")
-    st.write("**Limitations:** No external datasets fetched, no clinical validation, no drug safety certification, no efficacy claim.")
-    st.dataframe(demo[["Candidate","Illustrative priority score","Uncertainty","Review flags"]],use_container_width=True,hide_index=True)
-    report_text=("SafeRepurpose AI Prototype Report\n\n"
-                 "Mode: Synthetic demonstration only.\n"
-                 "No real drug or disease dataset was analyzed.\n"
-                 "Scores are invented examples to demonstrate UI logic.\n"
-                 "Not clinical evidence or a formal biosafety assessment.\n\n"
-                 + demo[["Candidate","Illustrative priority score","Uncertainty","Review flags"]].to_string(index=False))
-    st.download_button("Download report (TXT)",report_text,"saferepurpose_demo_report.txt","text/plain")
-    st.markdown("---")
-    st.markdown("**Next development milestone:** Connect a documented public dataset and implement a reproducible, validated analysis workflow with scientific review.")
+st.subheader("What this result can and cannot tell you")
+st.markdown(
+    "- **Can show:** how a prototype might display a candidate list, score, rank, and review prompts.\n"
+    "- **Cannot show:** real efficacy, clinical suitability, safety, or a validated drug–disease relationship.\n"
+    "- **Data status:** no real disease-expression dataset or drug-response dataset is queried in this version."
+)
+
+st.header("4. Biosafety-aware review checklist")
+checks = [
+    "Dataset source and license/usage terms reviewed (when real data are added)",
+    "Data completeness and missing values reviewed",
+    "Methods, assumptions, and limitations documented",
+    "Uncertainty and lack of validation clearly disclosed",
+    "Institutional review / expert consultation considered where appropriate",
+    "No clinical or laboratory use based on this prototype alone",
+]
+for item in checks:
+    st.checkbox(item, key="review_" + item)
+
+st.header("5. Generate a demo report")
+review_status = [st.session_state.get("review_" + item, False) for item in checks]
+report = f"""SafeRepurpose AI — Synthetic Demo Report
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+
+Disease context: {disease}
+Selected example medicine: {chosen}
+Illustrative score: {int(selected_row['Demo score'])}
+Illustrative rank: {int(selected_row['Demo rank'])}
+
+Synthetic shortlist:
+{df.to_string(index=False)}
+
+Checklist:
+""" + "\n".join(
+    f"- [{'x' if done else ' '}] {item}" for item, done in zip(checks, review_status)
+) + """
+
+Limitations:
+All scores and rankings are invented demonstration values. No actual biological dataset was analyzed.
+This is not medical advice, evidence of efficacy, a validated biosafety assessment, or certification.
+"""
+st.download_button("⬇️ Download demo report (.txt)", report, file_name="SafeRepurpose_demo_report.txt")
 
 st.divider()
-st.caption("SafeRepurpose AI • Hackathon prototype • Synthetic demo data • Responsible research only")
+st.caption("SafeRepurpose AI • Hackathon prototype • Synthetic demonstration only")
